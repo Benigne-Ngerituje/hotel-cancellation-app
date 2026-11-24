@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="intro">
+  <h1>Will this booking be cancelled?</h1>
+  <p>Enter the booking details to get the cancellation probability, a risk level and the main reasons behind it.</p>
+  <div class="samples">
+    <span>Try a sample:</span>
+    <button type="button" class="chip" onclick="fillSample('early')">Early online booking</button>
+    <button type="button" class="chip" onclick="fillSample('late')">Last-minute repeat guest</button>
+  </div>
+</section>
+
+{% if errors %}
+<div class="errors">
+  <strong>Please fix the following:</strong>
+  <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form method="post" class="card" id="booking-form">
+  <fieldset>
+    <legend>Stay</legend>
+    <div class="grid">
+      <label>Reservation date
+        <input type="date" name="reservation_date" value="{{ values.reservation_date }}" required>
+      </label>
+      <label>Lead time (days)
+        <input type="number" name="lead_time" min="0" max="1000" value="{{ values.lead_time }}" required>
+      </label>
+      <label>Weekend nights
+        <input type="number" name="no_of_weekend_nights" min="0" max="30" value="{{ values.no_of_weekend_nights }}" required>
+      </label>
+      <label>Week nights
+        <input type="number" name="no_of_week_nights" min="0" max="60" value="{{ values.no_of_week_nights }}" required>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Guests</legend>
+    <div class="grid">
+      <label>Adults
+        <input type="number" name="no_of_adults" min="0" max="10" value="{{ values.no_of_adults }}" required>
+      </label>
+      <label>Children
+        <input type="number" name="no_of_children" min="0" max="10" value="{{ values.no_of_children }}" required>
+      </label>
+      <label>Special requests
+        <input type="number" name="no_of_special_requests" min="0" max="10" value="{{ values.no_of_special_requests }}" required>
+      </label>
+      <label>Car parking needed
+        <select name="parking_space">
+          <option value="0" {% if values.parking_space|string == '0' %}selected{% endif %}>No</option>
+          <option value="1" {% if values.parking_space|string == '1' %}selected{% endif %}>Yes</option>
+        </select>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Booking</legend>
+    <div class="grid">
+      <label>Market segment
+        <select name="market_segment">
+          {% for o in options.market_segment %}
+          <option value="{{ o }}" {% if values.market_segment == o %}selected{% endif %}>{{ o }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Room type
+        <select name="room_type">
+          {% for o in options.room_type %}
+          <option value="{{ o }}" {% if values.room_type == o %}selected{% endif %}>{{ o.replace('_', ' ') }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Meal plan
+        <select name="meal_plan">
+          {% for o in options.meal_plan %}
+          <option value="{{ o }}" {% if values.meal_plan == o %}selected{% endif %}>{{ o }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Average price per night
+        <input type="number" name="avg_price" min="0" max="10000" step="0.01" value="{{ values.avg_price }}" required>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Guest history</legend>
+    <div class="grid">
+      <label>Repeat guest
+        <select name="repeated_guest">
+          <option value="0" {% if values.repeated_guest|string == '0' %}selected{% endif %}>No</option>
+          <option value="1" {% if values.repeated_guest|string == '1' %}selected{% endif %}>Yes</option>
+        </select>
+      </label>
+      <label>Previous cancellations
+        <input type="number" name="prev_cancellations" min="0" max="100" value="{{ values.prev_cancellations }}" required>
+      </label>
+      <label>Previous completed stays
+        <input type="number" name="prev_not_canceled" min="0" max="100" value="{{ values.prev_not_canceled }}" required>
+      </label>
+    </div>
+  </fieldset>
+
+  <button type="submit" class="primary">Predict cancellation risk</button>
+</form>
+
+<script>
+  const SAMPLES = {
+    early: {lead_time: 240, no_of_weekend_nights: 2, no_of_week_nights: 3, no_of_adults: 2,
+            no_of_children: 0, no_of_special_requests: 0, parking_space: "0",
+            market_segment: "Online", avg_price: 140, repeated_guest: "0",
+            prev_cancellations: 0, prev_not_canceled: 0, month: 7},
+    late:  {lead_time: 3, no_of_weekend_nights: 0, no_of_week_nights: 2, no_of_adults: 1,
+            no_of_children: 0, no_of_special_requests: 2, parking_space: "1",
+            market_segment: "Corporate", avg_price: 85, repeated_guest: "1",
+            prev_cancellations: 0, prev_not_canceled: 5, month: 1}
+  };
+  function fillSample(key) {
+    const s = SAMPLES[key], f = document.getElementById("booking-form");
+    for (const [k, v] of Object.entries(s)) {
+      const el = f.elements[k];
+      if (k === "month" || !el) continue;
+      // skip a dropdown value the model does not know
+      if (el.tagName === "SELECT" && ![...el.options].some(o => o.value === String(v))) continue;
+      el.value = v;
+    }
+    const year = new Date().getFullYear();
+    f.elements["reservation_date"].value = `${year}-${String(s.month).padStart(2, "0")}-15`;
+  }
+</script>
+{% endblock %}

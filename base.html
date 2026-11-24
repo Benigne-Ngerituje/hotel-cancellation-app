@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Booking Cancellation Predictor{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a href="{{ url_for('index') }}" class="brand">Booking Cancellation Predictor</a>
+      <span class="tag">{{ model_name }}{% if test_roc_auc %} · Test ROC-AUC {{ "%.3f"|format(test_roc_auc) }}{% endif %}</span>
+    </div>
+  </header>
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="wrap footer">
+    Machine learning course project · Data: Kaggle Hotel Booking Cancellation Prediction
+  </footer>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Result · Booking Cancellation Predictor{% endblock %}
+{% block content %}
+{% set pct = (result.probability * 100) | round(1) %}
+<section class="card result risk-{{ result.risk_level | lower }}">
+  <p class="eyebrow">Cancellation probability</p>
+  <div class="big">{{ pct }}%</div>
+
+  <div class="meter" aria-hidden="true">
+    <div class="fill" style="width: {{ pct }}%"></div>
+    <div class="mark" style="left: {{ (result.threshold * 100) | round(1) }}%" title="Decision threshold"></div>
+  </div>
+  <div class="scale">
+    <span>0%</span>
+    <span class="thr" style="left: {{ (result.threshold * 100) | round(1) }}%">Threshold {{ (result.threshold * 100) | round(0) | int }}%</span>
+    <span>100%</span>
+  </div>
+
+  <div class="badge">{{ result.risk_level }} risk</div>
+  <p class="action"><strong>Suggested action:</strong> {{ result.action }}</p>
+</section>
+
+<section class="card">
+  <h2>Top 3 reasons</h2>
+  <ol class="reasons">
+    {% for r in result.reasons %}
+    <li class="{{ 'up' if r.effect == 'increases' else 'down' }}">
+      <span class="arrow">{{ '▲' if r.effect == 'increases' else '▼' }}</span>
+      <div>
+        <strong>{{ r.factor }}: {{ r.value }}</strong>
+        <span class="muted">{{ r.effect | capitalize }} the cancellation risk</span>
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+  <p class="muted small">Reasons come from SHAP values: how much each booking detail pushed this prediction up or down.</p>
+</section>
+
+<section class="card">
+  <h2>Booking summary</h2>
+  <dl class="summary">
+    <dt>Reservation</dt><dd>{{ weekday }}, {{ month }}</dd>
+    <dt>Lead time</dt><dd>{{ row.lead_time }} days</dd>
+    <dt>Stay</dt><dd>{{ row.no_of_weekend_nights }} weekend + {{ row.no_of_week_nights }} week nights</dd>
+    <dt>Guests</dt><dd>{{ row.no_of_adults }} adults, {{ row.no_of_children }} children</dd>
+    <dt>Market segment</dt><dd>{{ row.market_segment }}</dd>
+    <dt>Room · Meal</dt><dd>{{ row.room_type.replace('_', ' ') }} · {{ row.meal_plan }}</dd>
+    <dt>Price per night</dt><dd>{{ '%.2f' % row.avg_price }}</dd>
+    <dt>Special requests</dt><dd>{{ row.no_of_special_requests }}</dd>
+  </dl>
+  <p class="muted small">Risk levels: Low below {{ (low_cut * 100) | round(0) | int }}%, Medium from {{ (low_cut * 100) | round(0) | int }}% up to the {{ (result.threshold * 100) | round(0) | int }}% decision threshold, High from the threshold up (the model predicts a cancellation).</p>
+</section>
+
+<a href="{{ url_for('index') }}" class="primary link-btn">Check another booking</a>
+{% endblock %}
